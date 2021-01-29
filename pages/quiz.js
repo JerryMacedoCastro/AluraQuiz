@@ -23,8 +23,14 @@ function LoadingWidget() {
   );
 }
 
-function QuestionWidget({ question, totalQuestions, questionIndex }) {
+function QuestionWidget({ question, totalQuestions, questionIndex, onSubmit }) {
   const questionId = `question_${questionIndex}`;
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    onSubmit();
+  };
+
   return (
     <Widget>
       <Widget.Header>
@@ -38,7 +44,7 @@ function QuestionWidget({ question, totalQuestions, questionIndex }) {
       <Widget.Content>
         <h2>{question.title}</h2>
         <p>{question.description}</p>
-        <form>
+        <form onSubmit={handleSubmit}>
           {question.alternatives.map((item, index) => {
             const alternativeId = `alternative_${index}`;
             return (
@@ -48,24 +54,41 @@ function QuestionWidget({ question, totalQuestions, questionIndex }) {
               </Widget.Topic>
             );
           })}
+          <Button type="submit">Confirmar</Button>
         </form>
-        <Button type="submit">Confirmar</Button>
       </Widget.Content>
-      {console.log(question)}
     </Widget>
   );
 }
 
 export default function QuizPage() {
-  const screenState = screenStates.QUIZ;
-  const questionIndex = 1;
+  const [currentQuestion, setCurrentQuestion] = React.useState(0);
+  const [screenState, setScreenState] = React.useState(screenStates.LOADING);
+  const questionIndex = currentQuestion;
   const question = db.questions[questionIndex];
+
+  React.useEffect(() => {
+    setTimeout(() => {
+      setScreenState(screenStates.QUIZ);
+    }, 1 * 1000);
+  }, []);
+
+  const handleSubmitQuiz = () => {
+    const nextQuestion = questionIndex + 1;
+    if (nextQuestion < db.questions.length) {
+      setCurrentQuestion(questionIndex + 1);
+    } else {
+      setScreenState(screenStates.RESULT);
+    }
+  };
+
   return (
     <QuizBackground backgroundImage={db.bg}>
       <QuizContainer>
         <QuizLogo />
         {screenState === screenStates.QUIZ && (
           <QuestionWidget
+            onSubmit={handleSubmitQuiz}
             question={question}
             totalQuestions={db.questions.length}
             questionIndex={questionIndex}
